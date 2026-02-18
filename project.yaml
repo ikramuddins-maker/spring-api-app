@@ -1,0 +1,16 @@
+project:
+  name: "devops-java-app"
+  group: "com.example"
+  version: "1.0.0"
+  
+build:
+  jdk: "17"
+  tool: "maven"
+
+docker:
+  imageName: "ikramuddin001/spring-api-app"
+  registry: "docker.io"
+
+analysis:
+  sonarProjectKey: "spring-api-app-key"
+  failOnQualityGate: true
