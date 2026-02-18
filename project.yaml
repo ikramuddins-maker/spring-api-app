@@ -1,16 +1,16 @@
-project:
-  name: "devops-java-app"
-  group: "com.example"
-  version: "1.0.0"
-  
 build:
-  jdk: "17"
-  tool: "maven"
+  name: devops-java-app
+  jarName: devops-java-app-0.0.1-SNAPSHOT.jar
 
-docker:
-  imageName: "ikramuddin001/spring-api-app"
-  registry: "docker.io"
-
-analysis:
-  sonarProjectKey: "spring-api-app-key"
-  failOnQualityGate: true
+deployment:
+  - appName: devops-java-app
+    environments:
+      - env: local-dev
+        branch: develop
+        deployFlag: enable
+        container: enable
+        spaceName: dev-namespace
+      - env: production
+        branch: main
+        deployFlag: disable
+        spaceName: prod-namespace

@@ -1,47 +1,47 @@
 pipeline {
     agent any
-    
+    tools { maven 'M3' }
     environment {
-        // Read the YAML file into an object
-        CONFIG = "" 
+        CONFIG = ""
+        MATCHED_ENV = ""
     }
-
     stages {
-        stage('Initialize Configuration') {
+        stage('Initialize & Parse') {
             steps {
                 script {
-                    // Read and parse the YAML
-                    def yamlData = readYaml file: 'project.yaml'
-                    CONFIG = yamlData
-                    echo "Starting build for: ${CONFIG.project.name}"
+                    CONFIG = readYaml file: 'project.yaml'
+                    MATCHED_ENV = CONFIG.deployment[0].environments.find { it.branch == env.BRANCH_NAME }
+                    if (!MATCHED_ENV) { error "No config for branch ${env.BRANCH_NAME}" }
                 }
             }
         }
-
         stage('Build & Sonar') {
             steps {
-                // Use the tool name defined in your YAML
                 sh 'mvn clean package -DskipTests'
                 withSonarQubeEnv('sonarqube') {
-                    sh "mvn sonar:sonar -Dsonar.projectKey=${CONFIG.analysis.sonarProjectKey}"
+                    sh "mvn sonar:sonar -Dsonar.projectKey=${CONFIG.build.name}"
                 }
             }
         }
-
         stage('Docker Build & Push') {
+            when { expression { return MATCHED_ENV.deployFlag == 'enable' } }
             steps {
                 script {
                     def tag = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    // Dynamic image name from YAML!
-                    def fullImage = "${CONFIG.docker.imageName}:${tag}"
-                    
-                    sh "docker build -t ${fullImage} ."
-                    
+                    sh "docker build -t ikramuddin001/spring-api-app:${tag} ."
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                         sh "echo \$PASS | docker login -u \$USER --password-stdin"
-                        sh "docker push ${fullImage}"
+                        sh "docker push ikramuddin001/spring-api-app:${tag}"
                     }
                 }
+            }
+        }
+        stage('Deploy to K8s') {
+            when { expression { return MATCHED_ENV.deployFlag == 'enable' } }
+            steps {
+                sh "kubectl create namespace ${MATCHED_ENV.spaceName} --dry-run=client -o yaml | kubectl apply -f -"
+                sh "echo 'Simulated Deployment of ${CONFIG.build.name} to ${MATCHED_ENV.spaceName}'"
+                // For a real pod: sh "kubectl run my-app --image=ikramuddin001/spring-api-app:latest -n ${MATCHED_ENV.spaceName}"
             }
         }
     }
