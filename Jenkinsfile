@@ -1,19 +1,14 @@
 pipeline {
     agent any
     
-    environment {
-        SCANNER_HOME = tool 'sonarqube'
+    tools {
+        maven 'M3'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Build & Unit Test') {
             steps {
-                git branch: 'main', url: 'https://github.com/ikramuddins-maker/spring-api-app.git'
-            }
-        }
-        
-        stage('Build & Test') {
-            steps {
+                // Generate the JAR
                 sh 'mvn clean package -DskipTests'
             }
         }
@@ -22,6 +17,16 @@ pipeline {
             steps {
                 withSonarQubeEnv('sonarqube') {
                     sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def tag = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    sh "docker build -t ikramuddin001/spring-api-app:${tag} ."
+                    sh "docker build -t ikramuddin001/spring-api-app:latest ."
                 }
             }
         }
