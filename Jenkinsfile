@@ -19,10 +19,18 @@ pipeline {
             steps {
                 sh 'mvn clean package -DskipTests'
                 withSonarQubeEnv('sonarqube') {
-                    sh "mvn sonar:sonar -Dsonar.projectKey=${CONFIG.build.name}"
+                    sh "mvn sonar:sonar -Dsonar.projectKey=${CONFIG.build.name} -X" // SonarQube to send logs to Console Output
                 }
             }
         }
+        stage('Quality Check') {
+            steps {
+                 timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                 }       
+             }
+        }
+
         stage('Docker Build & Push') {
             when { expression { return MATCHED_ENV.deployFlag == 'enable' } }
             steps {
@@ -36,6 +44,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Deploy to K8s') {
             when { expression { return MATCHED_ENV.deployFlag == 'enable' } }
             steps {

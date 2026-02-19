@@ -27,4 +27,16 @@ public class TaskController {
         info.put("owner", "Ikramuddin");
         return info;
     }
+
+    @GetMapping("/report")
+    public String getTaskReport() {
+        ReportGenerator generator = new ReportGenerator();
+        return generator.generateTaskReport(tasks);
+    }
+
+    @GetMapping("/metrics")
+    public Map<String, Object> getMetrics() {
+        ReportGenerator generator = new ReportGenerator();
+        return generator.generateMetrics(tasks);
+    }
 }
