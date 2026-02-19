@@ -2,6 +2,7 @@ package com.example.devops_java_app;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
+import com.example.devops_java_app.ReportGenerator;
 
 @RestController
 @RequestMapping("/api")

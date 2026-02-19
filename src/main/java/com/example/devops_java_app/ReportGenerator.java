@@ -22,7 +22,7 @@ public class ReportGenerator {
         }
         
         // SonarQube Issue: Unused variable
-        int timestamp = System.currentTimeMillis() / 1000;
+        long timestamp = System.currentTimeMillis() / 1000;
         int unused_count = tasks.size();
         
         // SonarQube Issue: Potential null pointer dereference
