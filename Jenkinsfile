@@ -4,7 +4,7 @@ def MATCHED_ENV = [:]
 
 pipeline {
     agent any
-    tools { maven 'M3' }
+    tools { maven 'Maven305' }
     
     stages {
         stage('Initialize & Parse') {
