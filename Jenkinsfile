@@ -24,7 +24,7 @@ pipeline {
                     -Dsonar.projectKey=devops-java-app \
                     -Dsonar.projectName='devops-java-app' \
                     -Dsonar.host.url=https://dev-sonar.apiwiz.io \
-                    -Dsonar.token=sqp_b727a4e8c60e1066f7b4e1bb5e869e60e1cd56c0
+                    -Dsonar.token=sqa_89dbf44eec1944f5d1df8760fbc5f8b98206e680
                     '''
                 }
             }
