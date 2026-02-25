@@ -40,7 +40,7 @@ pipeline {
 
         stage('Quality Check') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(time: 10, unit: 'SECONDS') {
                     // This waits for SonarQube to finish processing and report back
                     waitForQualityGate abortPipeline: true
                 }       
