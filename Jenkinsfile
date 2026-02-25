@@ -19,39 +19,52 @@ pipeline {
             steps {
                 sh 'mvn clean package -DskipTests'
                 withSonarQubeEnv('sonarqube') {
-                    sh "mvn sonar:sonar -Dsonar.projectKey=${CONFIG.build.name} -X" // SonarQube to send logs to Console Output
+                    sh '''
+                    mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                    -Dsonar.projectKey=devops-java-app \
+                    -Dsonar.projectName='devops-java-app' \
+                    -Dsonar.host.url=https://dev-sonar.apiwiz.io \
+                    -Dsonar.token=sqp_b727a4e8c60e1066f7b4e1bb5e869e60e1cd56c0
+                    '''
                 }
             }
         }
         stage('Quality Check') {
             steps {
                  timeout(time: 1, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                    waitForQualityGate abortPipeline: false, credentialsId: 'prod-sonar-token'
                  }       
              }
         }
 
-        stage('Docker Build & Push') {
-            when { expression { return MATCHED_ENV.deployFlag == 'enable' } }
+        stage('Notify') {
             steps {
-                script {
-                    def tag = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    sh "docker build -t ikramuddin001/spring-api-app:${tag} ."
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                        sh "echo \$PASS | docker login -u \$USER --password-stdin"
-                        sh "docker push ikramuddin001/spring-api-app:${tag}"
-                    }
-                }
-            }
-        }
-        
-        stage('Deploy to K8s') {
-            when { expression { return MATCHED_ENV.deployFlag == 'enable' } }
-            steps {
-                sh "kubectl create namespace ${MATCHED_ENV.spaceName} --dry-run=client -o yaml | kubectl apply -f -"
-                sh "echo 'Simulated Deployment of ${CONFIG.build.name} to ${MATCHED_ENV.spaceName}'"
-                // For a real pod: sh "kubectl run my-app --image=ikramuddin001/spring-api-app:latest -n ${MATCHED_ENV.spaceName}"
-            }
+                sh "echo Pipeline completed for branch ${env.BRANCH_NAME} with deploy flag ${MATCHED_ENV.deployFlag}"
+             }
         }
     }
 }
+//         stage('Docker Build & Push') {
+//             when { expression { return MATCHED_ENV.deployFlag == 'enable' } }
+//             steps {
+//                 script {
+//                     def tag = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+//                     sh "docker build -t ikramuddin001/spring-api-app:${tag} ."
+//                     withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+//                         sh "echo \$PASS | docker login -u \$USER --password-stdin"
+//                         sh "docker push ikramuddin001/spring-api-app:${tag}"
+//                     }
+//                 }
+//             }
+//         }
+        
+//         stage('Deploy to K8s') {
+//             when { expression { return MATCHED_ENV.deployFlag == 'enable' } }
+//             steps {
+//                 sh "kubectl create namespace ${MATCHED_ENV.spaceName} --dry-run=client -o yaml | kubectl apply -f -"
+//                 sh "echo 'Simulated Deployment of ${CONFIG.build.name} to ${MATCHED_ENV.spaceName}'"
+//                 // For a real pod: sh "kubectl run my-app --image=ikramuddin001/spring-api-app:latest -n ${MATCHED_ENV.spaceName}"
+//             }
+//         }
+//     }
+// }
